@@ -9,14 +9,22 @@ import { promisify } from "util";
 const exec = promisify(execFile);
 
 const NPM = process.env.NPM_PATH || "npm";
+const NPM_TOKEN = process.env.NPM_TOKEN || "";
 
 async function run(
   args: string[],
   cwd?: string,
 ): Promise<{ stdout: string; stderr: string }> {
+  const env: NodeJS.ProcessEnv = { ...process.env, NO_COLOR: "1" };
+
+  // NPM_TOKEN이 설정되어 있으면 npm config로 인증 주입
+  if (NPM_TOKEN) {
+    env.npm_config__authToken = NPM_TOKEN;
+  }
+
   const opts: { cwd?: string; timeout: number; env: NodeJS.ProcessEnv } = {
     timeout: 120_000,
-    env: { ...process.env, NO_COLOR: "1" },
+    env,
   };
   if (cwd) opts.cwd = cwd;
   return exec(NPM, args, opts);
@@ -265,15 +273,18 @@ server.tool(
 // ── npm whoami ──
 server.tool(
   "whoami",
-  "Check which npm user is currently authenticated",
+  "Check which npm user is currently authenticated. If not logged in, set NPM_TOKEN env var in MCP config.",
   {},
   async () => {
     try {
       const { stdout } = await run(["whoami"]);
       return { content: [{ type: "text", text: stdout.trim() }] };
     } catch (e: any) {
+      const hint = NPM_TOKEN
+        ? "Token is set but invalid."
+        : "No NPM_TOKEN set. Add it to your MCP server config env, or run `npm login` first.";
       return {
-        content: [{ type: "text", text: `Not logged in: ${e.stderr || e.message}` }],
+        content: [{ type: "text", text: `Not logged in. ${hint}\n${e.stderr || e.message}` }],
         isError: true,
       };
     }
