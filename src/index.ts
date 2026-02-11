@@ -5,29 +5,35 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { execFile } from "child_process";
 import { promisify } from "util";
+import { writeFileSync, mkdtempSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
 
 const exec = promisify(execFile);
 
 const NPM = process.env.NPM_PATH || "npm";
 const NPM_TOKEN = process.env.NPM_TOKEN || "";
 
+// NPM_TOKEN이 있으면 임시 .npmrc 파일 생성
+let npmrcArgs: string[] = [];
+if (NPM_TOKEN) {
+  const tmp = mkdtempSync(join(tmpdir(), "npm-mcp-"));
+  const npmrcPath = join(tmp, ".npmrc");
+  writeFileSync(npmrcPath, `//registry.npmjs.org/:_authToken=${NPM_TOKEN}\n`);
+  npmrcArgs = ["--userconfig", npmrcPath];
+}
+
 async function run(
   args: string[],
   cwd?: string,
 ): Promise<{ stdout: string; stderr: string }> {
-  const env: NodeJS.ProcessEnv = { ...process.env, NO_COLOR: "1" };
-
-  // NPM_TOKEN이 설정되어 있으면 npm config로 인증 주입
-  if (NPM_TOKEN) {
-    env.npm_config__authToken = NPM_TOKEN;
-  }
-
+  const fullArgs = [...args, ...npmrcArgs];
   const opts: { cwd?: string; timeout: number; env: NodeJS.ProcessEnv } = {
     timeout: 120_000,
-    env,
+    env: { ...process.env, NO_COLOR: "1" },
   };
   if (cwd) opts.cwd = cwd;
-  return exec(NPM, args, opts);
+  return exec(NPM, fullArgs, opts);
 }
 
 const server = new McpServer({
