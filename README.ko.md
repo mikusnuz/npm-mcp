@@ -2,6 +2,8 @@
 
 # npm-mcp
 
+[![MCP Badge](https://lobehub.com/badge/mcp/mikusnuz-npm-mcp)](https://lobehub.com/mcp/mikusnuz-npm-mcp)
+
 AI 어시스턴트가 npm 패키지를 관리할 수 있게 해주는 MCP 서버입니다. 퍼블리시, 버전 관리, 검색, 감사 등을 Claude Code나 다른 MCP 클라이언트를 통해 수행할 수 있습니다.
 
 ## 왜 필요한가

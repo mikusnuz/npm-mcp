@@ -2,6 +2,8 @@
 
 # npm-mcp
 
+[![MCP Badge](https://lobehub.com/badge/mcp/mikusnuz-npm-mcp)](https://lobehub.com/mcp/mikusnuz-npm-mcp)
+
 MCP server that lets AI assistants manage npm packages. Publish, version, search, audit -- all through Claude Code or any MCP client.
 
 ## Why
