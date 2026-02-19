@@ -2,6 +2,8 @@
 
 # npm-mcp
 
+[![npm version](https://img.shields.io/npm/v/@mikusnuz%2Fnpm-mcp)](https://www.npmjs.com/package/@mikusnuz/npm-mcp)
+
 AIアシスタントがnpmパッケージを管理できるようにするMCPサーバーです。Claude CodeやあらゆるMCPクライアントを通じて、公開、バージョン管理、検索、監査を実行できます。
 
 ## なぜ必要か

@@ -2,6 +2,8 @@
 
 # npm-mcp
 
+[![npm version](https://img.shields.io/npm/v/@mikusnuz%2Fnpm-mcp)](https://www.npmjs.com/package/@mikusnuz/npm-mcp)
+
 MCP 服务器，让 AI 助手能够管理 npm 包。发布、版本管理、搜索、审计——通过 Claude Code 或任何 MCP 客户端完成所有操作。
 
 ## 为什么需要它
