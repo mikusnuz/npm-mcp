@@ -1,6 +1,6 @@
 {
   "name": "@mikusnuz/npm-mcp",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "MCP server for npm package management — publish, version, search, audit, and more from your AI assistant",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

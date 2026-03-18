@@ -5,7 +5,7 @@
 [![npm version](https://img.shields.io/npm/v/@mikusnuz%2Fnpm-mcp)](https://www.npmjs.com/package/@mikusnuz/npm-mcp)
 [![MCP Badge](https://lobehub.com/badge/mcp/mikusnuz-npm-mcp)](https://lobehub.com/mcp/mikusnuz-npm-mcp)
 
-MCP server that lets AI assistants manage npm packages. Publish, version, search, audit -- all through Claude Code or any MCP client.
+MCP server that lets AI assistants manage npm packages. Publish, version, search, audit, install, and more -- all through Claude Code or any MCP client.
 
 ## Why
 
@@ -55,20 +55,73 @@ Or if you've already run `npm login` locally, skip `NPM_TOKEN` -- it uses your `
 
 ## Tools
 
+### Publishing & Versioning
+
 | Tool | Description |
 |------|-------------|
 | `publish` | Publish a package to npm registry |
-| `version` | Bump package version (patch/minor/major) |
+| `version` | Bump package version (patch/minor/major/pre*) |
+| `unpublish` | Remove a package version |
+| `deprecate` | Deprecate a version (or undeprecate with empty message) |
+| `pack` | Preview what would be published |
+
+### Package Info
+
+| Tool | Description |
+|------|-------------|
 | `view` | View package info from registry |
 | `search` | Search npm registry |
-| `unpublish` | Remove a package version |
-| `deprecate` | Deprecate a version |
+| `bugs` | Get bug tracker URL for a package |
+| `repo` | Get repository URL for a package |
+| `docs` | Get documentation URL for a package |
+| `diff` | Show diff between package versions |
+
+### Dependency Management
+
+| Tool | Description |
+|------|-------------|
+| `install` | Install packages |
+| `uninstall` | Remove packages |
+| `update` | Update packages to latest semver-compatible version |
+| `outdated` | Check for outdated packages |
+| `ls` | List installed packages |
+| `explain` | Explain why a package is installed |
+| `dedupe` | Reduce duplication in dependency tree |
+| `prune` | Remove extraneous packages |
+| `fund` | Show funding info for dependencies |
+| `query` | Query packages using CSS-like selectors |
+
+### Security & Diagnostics
+
+| Tool | Description |
+|------|-------------|
+| `audit` | Run security audit (with optional auto-fix) |
+| `sbom` | Generate Software Bill of Materials (CycloneDX/SPDX) |
+| `doctor` | Check npm environment health |
+| `ping` | Check registry connectivity |
+
+### Configuration & Auth
+
+| Tool | Description |
+|------|-------------|
+| `whoami` | Check current authenticated user |
+| `token` | Manage access tokens (list/revoke) |
+| `access` | Set or view access level on packages |
 | `owner` | Manage package owners (ls/add/rm) |
 | `dist-tag` | Manage distribution tags (ls/add/rm) |
-| `pack` | Preview what would be published |
-| `whoami` | Check current authenticated user |
+| `profile` | View or modify npm profile settings |
+| `config` | View npm configuration (read-only) |
+
+### Project Setup
+
+| Tool | Description |
+|------|-------------|
 | `init` | Initialize a new package.json |
-| `audit` | Run security audit |
+| `pkg` | Manage package.json fields programmatically |
+| `ci` | Clean install from lockfile (for CI) |
+| `run-script` | Run scripts defined in package.json |
+| `link` | Symlink a local package for development |
+| `cache` | Manage the npm cache |
 
 ## Examples
 
@@ -98,6 +151,31 @@ search({ query: "react state management", limit: 5 })
 view({ package: "@yourorg/lib", field: "versions" })
 ```
 
+**Install packages:**
+```
+install({ path: "/home/user/my-app", packages: ["express", "cors"], saveDev: false })
+```
+
+**Check outdated dependencies:**
+```
+outdated({ path: "/home/user/my-app" })
+```
+
+**Compare versions:**
+```
+diff({ specs: ["lodash@4.17.20", "lodash@4.17.21"] })
+```
+
+**Generate SBOM:**
+```
+sbom({ path: "/home/user/my-app", format: "spdx", production: true })
+```
+
+**Query dependencies:**
+```
+query({ path: "/home/user/my-app", selector: ":root > .prod" })
+```
+
 ## Auth
 
 | Method | How |
@@ -105,7 +183,7 @@ view({ package: "@yourorg/lib", field: "versions" })
 | **NPM_TOKEN** (recommended) | Set `NPM_TOKEN` env var in MCP config. Get token from npmjs.com > Access Tokens |
 | **npm login** | Run `npm login` in terminal first. Token saved in `~/.npmrc` is used automatically |
 
-For 2FA-enabled accounts, pass `otp` parameter to publish/unpublish/deprecate/owner tools.
+For 2FA-enabled accounts, pass `otp` parameter to publish/unpublish/deprecate/owner/access/token tools.
 
 ## Environment Variables
 
