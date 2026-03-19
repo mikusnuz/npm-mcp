@@ -7,6 +7,8 @@
 
 MCP server that lets AI assistants manage npm packages. Publish, version, search, audit, install, and more -- all through Claude Code or any MCP client.
 
+[![npm-mcp MCP server](https://glama.ai/mcp/servers/mikusnuz/npm-mcp/badges/card.svg)](https://glama.ai/mcp/servers/mikusnuz/npm-mcp)
+
 ## When to Use
 
 | Task | Tool |
