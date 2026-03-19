@@ -1,0 +1,16 @@
+# Smithery configuration file: https://smithery.ai/docs/config#smitheryyaml
+
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      npmToken:
+        type: string
+        description: npm authentication token (from npmjs.com > Access Tokens)
+      npmPath:
+        type: string
+        description: Path to npm binary (if not in PATH)
+  commandFunction:
+    |-
+    config => ({ command: 'npx', args: ['-y', '@mikusnuz/npm-mcp'], env: { NPM_TOKEN: config.npmToken || '', NPM_PATH: config.npmPath || '' } })
