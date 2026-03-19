@@ -7,6 +7,20 @@
 
 MCP server that lets AI assistants manage npm packages. Publish, version, search, audit, install, and more -- all through Claude Code or any MCP client.
 
+## When to Use
+
+| Task | Tool |
+|------|------|
+| "Publish this package to npm" | `publish` |
+| "Check for outdated dependencies" | `outdated` |
+| "Run a security audit on my packages" | `audit` |
+| "Search npm for authentication libraries" | `search` |
+| "Bump the version and publish" | `version` then `publish` |
+| "Check who owns this npm package" | `owner` |
+| "View download stats for my package" | `view` |
+
+> **For AI agents:** See [`llms.txt`](llms.txt) for a machine-readable summary. Copy [`templates/CLAUDE.md`](templates/CLAUDE.md) or [`templates/AGENTS.md`](templates/AGENTS.md) into your project to teach your agent about this MCP.
+
 ## Why
 
 You're in Claude Code building a library. You finish the code, and now you need to publish it. Instead of switching to a terminal:

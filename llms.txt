@@ -1,0 +1,93 @@
+# npm-mcp
+
+> MCP server for npm registry operations. Publish, version, search, audit, install, and manage packages through any MCP client.
+
+## Tools (36)
+
+### Publishing & Versioning
+- publish: Publish a package to npm registry
+- version: Bump package version (patch/minor/major/pre*)
+- unpublish: Remove a package version
+- deprecate: Deprecate a version (or undeprecate with empty message)
+- pack: Preview what would be published
+
+### Package Info
+- view: View package info from registry
+- search: Search npm registry
+- bugs: Get bug tracker URL for a package
+- repo: Get repository URL for a package
+- docs: Get documentation URL for a package
+- diff: Show diff between package versions
+
+### Dependency Management
+- install: Install packages
+- uninstall: Remove packages
+- update: Update packages to latest semver-compatible version
+- outdated: Check for outdated packages
+- ls: List installed packages
+- explain: Explain why a package is installed
+- dedupe: Reduce duplication in dependency tree
+- prune: Remove extraneous packages
+- fund: Show funding info for dependencies
+- query: Query packages using CSS-like selectors
+
+### Security & Diagnostics
+- audit: Run security audit (with optional auto-fix)
+- sbom: Generate Software Bill of Materials (CycloneDX/SPDX)
+- doctor: Check npm environment health
+- ping: Check registry connectivity
+
+### Configuration & Auth
+- whoami: Check current authenticated user
+- token: Manage access tokens (list/revoke)
+- access: Set or view access level on packages
+- owner: Manage package owners (ls/add/rm)
+- dist-tag: Manage distribution tags (ls/add/rm)
+- profile: View or modify npm profile settings
+- config: View npm configuration (read-only)
+
+### Project Setup
+- init: Initialize a new package.json
+- pkg: Manage package.json fields programmatically
+- ci: Clean install from lockfile (for CI)
+- run-script: Run scripts defined in package.json
+- link: Symlink a local package for development
+- cache: Manage the npm cache
+
+## Install
+
+```bash
+git clone https://github.com/mikusnuz/npm-mcp.git
+cd npm-mcp && npm install && npm run build
+```
+
+## Environment Variables
+
+- NPM_TOKEN — npm authentication token (get from npmjs.com > Access Tokens)
+- NPM_PATH — path to npm binary if not in PATH (default: `npm`)
+
+If you've already run `npm login` locally, NPM_TOKEN is optional — it uses ~/.npmrc automatically.
+
+## MCP Config
+
+```json
+{
+  "mcpServers": {
+    "npm-mcp": {
+      "command": "node",
+      "args": ["/path/to/npm-mcp/dist/index.js"],
+      "env": {
+        "NPM_TOKEN": "npm_xxxxxxxxxxxx"
+      }
+    }
+  }
+}
+```
+
+## Auth Notes
+
+For 2FA-enabled accounts, pass `otp` parameter to publish/unpublish/deprecate/owner/access/token tools.
+
+## Links
+- npm: https://www.npmjs.com/package/@mikusnuz/npm-mcp
+- GitHub: https://github.com/mikusnuz/npm-mcp
