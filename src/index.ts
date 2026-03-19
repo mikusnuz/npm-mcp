@@ -1188,3 +1188,231 @@ main().catch((err) => {
   process.stderr.write(`Fatal: ${err.message}\n`);
   process.exit(1);
 });
+
+// ── Smithery Sandbox ──
+
+export function createSandboxServer() {
+  const sandbox = new McpServer({
+    name: "npm-mcp",
+    version: "1.2.0",
+  });
+
+  const noop = async () => ({ content: [{ type: "text" as const, text: "sandbox" }] });
+
+  sandbox.tool("publish", "Publish a package to the npm registry", {
+    path: z.string().describe("Absolute path to the package directory"),
+    tag: z.string().optional().describe("Dist-tag (default: latest)"),
+    access: z.enum(["public", "restricted"]).optional().describe("Access level for scoped packages"),
+    dryRun: z.boolean().optional().describe("Run publish without actually publishing"),
+    otp: z.string().optional().describe("One-time password for 2FA"),
+  }, noop);
+
+  sandbox.tool("version", "Bump the package version", {
+    path: z.string().describe("Absolute path to the package directory"),
+    bump: z.enum(["patch", "minor", "major", "prepatch", "preminor", "premajor", "prerelease"]).describe("Version bump type"),
+    preid: z.string().optional().describe("Prerelease identifier"),
+    noGitTag: z.boolean().optional().describe("Skip git tag creation"),
+  }, noop);
+
+  sandbox.tool("view", "View package information from the registry", {
+    package: z.string().describe("Package name"),
+    field: z.string().optional().describe("Specific field to view"),
+  }, noop);
+
+  sandbox.tool("search", "Search npm registry for packages", {
+    query: z.string().describe("Search query"),
+    limit: z.number().optional().describe("Max results"),
+  }, noop);
+
+  sandbox.tool("unpublish", "Remove a package version from the registry", {
+    package: z.string().describe("Package name with optional version"),
+    force: z.boolean().optional().describe("Force unpublish"),
+    otp: z.string().optional().describe("One-time password for 2FA"),
+  }, noop);
+
+  sandbox.tool("deprecate", "Deprecate a version of a package", {
+    package: z.string().describe("Package@version range"),
+    message: z.string().describe("Deprecation message"),
+    otp: z.string().optional().describe("One-time password for 2FA"),
+  }, noop);
+
+  sandbox.tool("owner", "Manage package owners", {
+    action: z.enum(["ls", "add", "rm"]).describe("Action to perform"),
+    package: z.string().describe("Package name"),
+    user: z.string().optional().describe("Username"),
+    otp: z.string().optional().describe("One-time password for 2FA"),
+  }, noop);
+
+  sandbox.tool("dist-tag", "Manage distribution tags", {
+    action: z.enum(["ls", "add", "rm"]).describe("Action to perform"),
+    package: z.string().describe("Package name"),
+    tag: z.string().optional().describe("Tag name"),
+  }, noop);
+
+  sandbox.tool("pack", "Create a tarball from a package", {
+    path: z.string().describe("Absolute path to the package directory"),
+    dryRun: z.boolean().optional().describe("List files without creating tarball"),
+  }, noop);
+
+  sandbox.tool("whoami", "Check which npm user is currently authenticated", {}, noop);
+
+  sandbox.tool("init", "Initialize a new package.json", {
+    path: z.string().describe("Absolute path to the directory"),
+    scope: z.string().optional().describe("Scope for the package"),
+  }, noop);
+
+  sandbox.tool("audit", "Run a security audit on the package", {
+    path: z.string().describe("Absolute path to the package directory"),
+    fix: z.boolean().optional().describe("Automatically fix vulnerabilities"),
+    level: z.enum(["info", "low", "moderate", "high", "critical"]).optional().describe("Minimum vulnerability level"),
+    production: z.boolean().optional().describe("Only audit production dependencies"),
+  }, noop);
+
+  sandbox.tool("outdated", "Check for outdated packages in a project", {
+    path: z.string().describe("Absolute path to the package directory"),
+    global: z.boolean().optional().describe("Check global packages"),
+    long: z.boolean().optional().describe("Show extended information"),
+  }, noop);
+
+  sandbox.tool("ls", "List installed packages in a project", {
+    path: z.string().describe("Absolute path to the package directory"),
+    package: z.string().optional().describe("Specific package to look for"),
+    depth: z.number().optional().describe("Dependency tree depth"),
+    all: z.boolean().optional().describe("Show all packages"),
+    global: z.boolean().optional().describe("List global packages"),
+    production: z.boolean().optional().describe("Only show production dependencies"),
+  }, noop);
+
+  sandbox.tool("install", "Install packages in a project", {
+    path: z.string().describe("Absolute path to the package directory"),
+    packages: z.array(z.string()).optional().describe("Package names to install"),
+    saveDev: z.boolean().optional().describe("Save as devDependency"),
+    saveExact: z.boolean().optional().describe("Save exact version"),
+    global: z.boolean().optional().describe("Install globally"),
+    dryRun: z.boolean().optional().describe("Preview install"),
+  }, noop);
+
+  sandbox.tool("uninstall", "Remove packages from a project", {
+    path: z.string().describe("Absolute path to the package directory"),
+    packages: z.array(z.string()).describe("Package names to uninstall"),
+    global: z.boolean().optional().describe("Uninstall from global"),
+  }, noop);
+
+  sandbox.tool("update", "Update packages in a project", {
+    path: z.string().describe("Absolute path to the package directory"),
+    packages: z.array(z.string()).optional().describe("Specific packages to update"),
+    global: z.boolean().optional().describe("Update global packages"),
+    dryRun: z.boolean().optional().describe("Preview updates"),
+  }, noop);
+
+  sandbox.tool("access", "Set or view access level on published packages", {
+    action: z.enum(["list", "get", "set", "grant", "revoke"]).describe("Action to perform"),
+    package: z.string().optional().describe("Package name"),
+    level: z.enum(["public", "restricted"]).optional().describe("Access level"),
+    team: z.string().optional().describe("Team name"),
+    permission: z.enum(["read-only", "read-write"]).optional().describe("Permission level"),
+    otp: z.string().optional().describe("One-time password for 2FA"),
+  }, noop);
+
+  sandbox.tool("token", "Manage npm access tokens", {
+    action: z.enum(["list", "revoke"]).describe("Action to perform"),
+    token: z.string().optional().describe("Token ID to revoke"),
+    otp: z.string().optional().describe("One-time password for 2FA"),
+  }, noop);
+
+  sandbox.tool("ping", "Check connectivity to the npm registry", {}, noop);
+
+  sandbox.tool("bugs", "Get the bug tracker URL for a package", {
+    package: z.string().describe("Package name"),
+  }, noop);
+
+  sandbox.tool("repo", "Get the repository URL for a package", {
+    package: z.string().describe("Package name"),
+  }, noop);
+
+  sandbox.tool("docs", "Get the documentation URL for a package", {
+    package: z.string().describe("Package name"),
+  }, noop);
+
+  sandbox.tool("diff", "Show diff between package versions", {
+    package: z.string().optional().describe("Package spec for comparison"),
+    specs: z.array(z.string()).optional().describe("Two package specs to compare"),
+    path: z.string().optional().describe("Absolute path to local package"),
+    diffNameOnly: z.boolean().optional().describe("Only show file names that changed"),
+  }, noop);
+
+  sandbox.tool("pkg", "Manage package.json fields programmatically", {
+    path: z.string().describe("Absolute path to the package directory"),
+    action: z.enum(["get", "set", "delete"]).describe("Action to perform"),
+    field: z.string().describe("Field name"),
+    value: z.string().optional().describe("Value to set"),
+  }, noop);
+
+  sandbox.tool("fund", "Show funding information for installed packages", {
+    path: z.string().describe("Absolute path to the package directory"),
+    package: z.string().optional().describe("Specific package to check"),
+  }, noop);
+
+  sandbox.tool("dedupe", "Reduce duplication in the dependency tree", {
+    path: z.string().describe("Absolute path to the package directory"),
+    dryRun: z.boolean().optional().describe("Preview changes"),
+  }, noop);
+
+  sandbox.tool("explain", "Explain why a package is installed", {
+    path: z.string().describe("Absolute path to the package directory"),
+    package: z.string().describe("Package name to explain"),
+  }, noop);
+
+  sandbox.tool("sbom", "Generate a Software Bill of Materials", {
+    path: z.string().describe("Absolute path to the package directory"),
+    format: z.enum(["cyclonedx", "spdx"]).optional().describe("SBOM format"),
+    production: z.boolean().optional().describe("Only include production dependencies"),
+  }, noop);
+
+  sandbox.tool("profile", "View or modify npm user profile settings", {
+    action: z.enum(["get", "set"]).describe("Action to perform"),
+    field: z.string().optional().describe("Profile field"),
+    value: z.string().optional().describe("Value to set"),
+    otp: z.string().optional().describe("One-time password for 2FA"),
+  }, noop);
+
+  sandbox.tool("ci", "Clean install dependencies from lockfile", {
+    path: z.string().describe("Absolute path to the package directory"),
+  }, noop);
+
+  sandbox.tool("run-script", "Run a script defined in package.json", {
+    path: z.string().describe("Absolute path to the package directory"),
+    script: z.string().optional().describe("Script name to run"),
+    args: z.array(z.string()).optional().describe("Arguments to pass to the script"),
+  }, noop);
+
+  sandbox.tool("doctor", "Run diagnostics to check npm environment health", {}, noop);
+
+  sandbox.tool("cache", "Manage the npm cache", {
+    action: z.enum(["clean", "verify", "ls"]).describe("Action"),
+    force: z.boolean().optional().describe("Force clean"),
+  }, noop);
+
+  sandbox.tool("config", "View npm configuration", {
+    action: z.enum(["list", "get"]).describe("Action"),
+    key: z.string().optional().describe("Config key to get"),
+  }, noop);
+
+  sandbox.tool("prune", "Remove extraneous packages", {
+    path: z.string().describe("Absolute path to the package directory"),
+    production: z.boolean().optional().describe("Remove devDependencies"),
+    dryRun: z.boolean().optional().describe("Preview changes"),
+  }, noop);
+
+  sandbox.tool("link", "Symlink a local package for development", {
+    path: z.string().describe("Absolute path to the package directory"),
+    package: z.string().optional().describe("Package name to link"),
+  }, noop);
+
+  sandbox.tool("query", "Query installed packages using CSS-like selectors", {
+    path: z.string().describe("Absolute path to the package directory"),
+    selector: z.string().describe("CSS-like dependency selector"),
+  }, noop);
+
+  return sandbox;
+}
