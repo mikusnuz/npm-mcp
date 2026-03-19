@@ -3,6 +3,7 @@
   "version": "1.2.1",
   "mcpName": "io.github.mikusnuz/npm",
   "description": "MCP server for npm package management — publish, version, search, audit, and more from your AI assistant",
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
