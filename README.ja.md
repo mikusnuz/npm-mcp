@@ -31,7 +31,7 @@ npm run build
 
 ### 2. npmトークンの取得
 
-[npmjs.com](https://www.npmjs.com) > Account > Access Tokens > **Generate New Token** (Automationタイプを推奨)にアクセスします。
+[npmjs.com](https://www.npmjs.com) > Account > Access Tokensで必要なパッケージ権限を持つ **granular access token** を作成します。Classic/Automationトークンは廃止されています。stage-onlyトークンでは`stage`ツールを使います。既存の`npm login`認証も利用できます。
 
 ### 3. Claude Codeに追加
 
@@ -60,6 +60,7 @@ npm run build
 | ツール | 説明 |
 |------|-------------|
 | `publish` | npmレジストリにパッケージを公開 |
+| `stage` | ステージ作成、一覧、詳細、ダウンロード、承認、却下 |
 | `version` | パッケージバージョンの更新 (patch/minor/major/pre*) |
 | `unpublish` | パッケージバージョンを削除 |
 | `deprecate` | バージョンを非推奨化（空メッセージで解除可能） |
@@ -177,6 +178,18 @@ query({ path: "/home/user/my-app", selector: ":root > .prod" })
 ```
 
 ## 認証
+
+stage-onlyトークンでは、`stage({ action: "publish", path: "/absolute/package/path" })`
+でアップロードし、`list`・`view`・`download`で確認します。`approve`または`reject`には
+`stageId`と管理者の2FAが必要です。公開されるのは`approve`の時点です。
+`download`には保存先の絶対`path`も必要です。`dryRun`は`publish`のみ対応します。
+ステージ公開には npm CLI **11.15.0 以降**と Node.js **22.14.0 以降**が必要です。
+`npm stage --help`で確認し、必要に応じて`NPM_PATH`でnpmを指定してください。
+[公式の前提条件](https://docs.npmjs.com/staged-publishing/)。granularトークンの直接公開は
+2027年1月に廃止予定です。[公式ドキュメント](https://docs.npmjs.com/about-access-tokens/)
+
+`pkg`の`value`にはJSONの値を直接渡します。文字列は文字列として保存されます。
+配列・オブジェクトを文字列化しないでください。
 
 | 方法 | 手順 |
 |--------|-----|

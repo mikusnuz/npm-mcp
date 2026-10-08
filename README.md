@@ -45,7 +45,10 @@ npm run build
 
 ### 2. Get npm token
 
-Go to [npmjs.com](https://www.npmjs.com) > Account > Access Tokens > **Generate New Token** (Automation type recommended).
+Go to [npmjs.com](https://www.npmjs.com) > Account > Access Tokens and create a
+**granular access token** with access to the packages you need. Classic and
+Automation tokens are no longer supported. A stage-only token uses the `stage`
+workflow below. Existing `npm login` credentials also work.
 
 ### 3. Add to Claude Code
 
@@ -74,6 +77,7 @@ Or if you've already run `npm login` locally, skip `NPM_TOKEN` -- it uses your `
 | Tool | Description |
 |------|-------------|
 | `publish` | Publish a package to npm registry |
+| `stage` | Stage, list, inspect, download, approve, or reject a pending package version |
 | `version` | Bump package version (patch/minor/major/pre*) |
 | `unpublish` | Remove a package version |
 | `deprecate` | Deprecate a version (or undeprecate with empty message) |
@@ -192,12 +196,42 @@ query({ path: "/home/user/my-app", selector: ":root > .prod" })
 
 ## Auth
 
+### Staged publishing
+
+Staged publishing requires npm CLI **11.15.0 or later** and Node.js **22.14.0
+or later**. Check `npm stage --help`; `NPM_PATH` can select a separate npm
+installation. See the [staged publishing prerequisites](https://docs.npmjs.com/staged-publishing/).
+
+```js
+stage({ action: "publish", path: "/home/user/my-lib", access: "public" })
+stage({ action: "list", package: "@yourorg/lib" })
+stage({ action: "view", stageId: "returned-stage-id" })
+stage({ action: "download", stageId: "returned-stage-id", path: "/home/user/review" })
+stage({ action: "approve", stageId: "returned-stage-id", otp: "123456" })
+// Or reject the staged version:
+stage({ action: "reject", stageId: "returned-stage-id", otp: "123456" })
+```
+
+Staging does not publish the package; approval does. Approval and rejection
+require maintainer 2FA. `dryRun` applies only to `stage` with `action: "publish"`.
+A direct publish with a stage-only token returns `E_STAGE_REQUIRED`. npm plans
+to remove direct publishing with granular tokens in January 2027.
+See [npm staging](https://docs.npmjs.com/cli/v11/commands/npm-stage/) and
+[token requirements](https://docs.npmjs.com/about-access-tokens/).
+
+`pkg` accepts JSON values directly: `value: "my-package"`, `value: true`,
+`value: ["keyword"]`, or `value: { test: "node --test" }`. Strings stay strings;
+do not stringify arrays or objects before passing them.
+
 | Method | How |
 |--------|-----|
 | **NPM_TOKEN** (recommended) | Set `NPM_TOKEN` env var in MCP config. Get token from npmjs.com > Access Tokens |
 | **npm login** | Run `npm login` in terminal first. Token saved in `~/.npmrc` is used automatically |
 
-For 2FA-enabled accounts, pass `otp` parameter to publish/unpublish/deprecate/owner/access/token tools.
+Pass `otp` when npm requires 2FA, including staged approval/rejection and package
+maintainer or token changes. Since August 2026, bypass-2FA tokens cannot bypass
+the second factor for account or governance operations. Tokens expire; renew
+the configured token when needed or refresh local credentials with `npm login`.
 
 ## Environment Variables
 

@@ -1,6 +1,6 @@
 {
   "name": "@mikusnuz/npm-mcp",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "mcpName": "io.github.mikusnuz/npm",
   "description": "MCP server for npm package management — publish, version, search, audit, and more from your AI assistant",
   "type": "module",
@@ -11,6 +11,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "test": "npm run build && node --test test/*.test.mjs",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
     "clean": "rm -rf dist",
@@ -43,7 +44,7 @@
     "README.md"
   ],
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.12.1",
+    "@modelcontextprotocol/sdk": "^1.32.1",
     "zod": "^3.24.2"
   },
   "devDependencies": {

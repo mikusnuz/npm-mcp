@@ -31,7 +31,7 @@ npm run build
 
 ### 2. 获取 npm token
 
-访问 [npmjs.com](https://www.npmjs.com) > Account > Access Tokens > **Generate New Token**（推荐使用 Automation 类型）。
+访问 [npmjs.com](https://www.npmjs.com) > Account > Access Tokens，创建具有所需包权限的 **granular access token**。Classic/Automation 令牌已停用。stage-only 令牌需要使用 `stage` 工具；也可以使用已有的 `npm login` 凭据。
 
 ### 3. 添加到 Claude Code
 
@@ -60,6 +60,7 @@ npm run build
 | 工具 | 描述 |
 |------|-------------|
 | `publish` | 将包发布到 npm 仓库 |
+| `stage` | 暂存版本，列出、查看、下载、批准或拒绝暂存版本 |
 | `version` | 升级包版本（patch/minor/major/pre*） |
 | `unpublish` | 移除包版本 |
 | `deprecate` | 弃用某个版本（空消息可取消弃用） |
@@ -177,6 +178,18 @@ query({ path: "/home/user/my-app", selector: ":root > .prod" })
 ```
 
 ## 认证
+
+使用 stage-only 令牌时，先调用
+`stage({ action: "publish", path: "/absolute/package/path" })`，再通过
+`list`、`view`、`download` 审查。`approve` 和 `reject` 需要 `stageId` 及维护者的
+双因素认证；只有 `approve` 才会正式发布。`download` 还需要目标目录的绝对
+`path`。`dryRun` 仅适用于 `publish`。暂存发布需要 npm CLI **11.15.0 或更高版本**和
+Node.js **22.14.0 或更高版本**。请用 `npm stage --help` 检查，必要时通过 `NPM_PATH`
+指定 npm。[官方要求](https://docs.npmjs.com/staged-publishing/)
+granular 令牌直接发布计划于 2027 年 1 月停止。
+[官方说明](https://docs.npmjs.com/about-access-tokens/)
+
+`pkg` 的 `value` 直接接受 JSON 值；字符串会保持为字符串。请勿先将数组或对象转成字符串。
 
 | 方法 | 如何使用 |
 |--------|-----|

@@ -6,19 +6,19 @@
     "url": "https://github.com/mikusnuz/npm-mcp",
     "source": "github"
   },
-  "version": "1.2.1",
+  "version": "1.3.0",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@mikusnuz/npm-mcp",
-      "version": "1.2.1",
+      "version": "1.3.0",
       "transport": {
         "type": "stdio"
       },
       "environmentVariables": [
         {
           "name": "NPM_TOKEN",
-          "description": "npm authentication token",
+          "description": "npm granular access token; stage-only tokens use the stage tool",
           "isRequired": false,
           "format": "string",
           "isSecret": true

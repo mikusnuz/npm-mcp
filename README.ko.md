@@ -31,7 +31,10 @@ npm run build
 
 ### 2. npm 토큰 발급
 
-[npmjs.com](https://www.npmjs.com) > Account > Access Tokens > **Generate New Token** (Automation 타입 권장)으로 이동합니다.
+[npmjs.com](https://www.npmjs.com) > Account > Access Tokens에서 필요한 패키지
+권한으로 **granular access token**을 만드세요. Classic/Automation 토큰은 더 이상
+지원되지 않습니다. stage-only 토큰은 아래 `stage` 절차를 사용하며, 기존
+`npm login` 인증도 사용할 수 있습니다.
 
 ### 3. Claude Code에 추가
 
@@ -60,6 +63,7 @@ npm run build
 | 도구 | 설명 |
 |------|-----|
 | `publish` | npm 레지스트리에 패키지를 퍼블리시합니다 |
+| `stage` | 버전을 스테이징하고 목록/상세/다운로드/승인/거절을 처리합니다 |
 | `version` | 패키지 버전을 올립니다 (patch/minor/major/pre*) |
 | `unpublish` | 패키지 버전을 제거합니다 |
 | `deprecate` | 버전을 deprecated로 표시합니다 (빈 메시지로 해제 가능) |
@@ -177,6 +181,30 @@ query({ path: "/home/user/my-app", selector: ":root > .prod" })
 ```
 
 ## 인증
+
+`stage`는 npm CLI **11.15.0 이상**, Node.js **22.14.0 이상**이 필요합니다.
+`npm stage --help`로 확인하고 필요한 경우 `NPM_PATH`로 해당 실행 파일을 지정하세요.
+[공식 최소 요구사항](https://docs.npmjs.com/staged-publishing/)
+
+```js
+stage({ action: "publish", path: "/home/user/my-lib", access: "public" })
+stage({ action: "list", package: "@yourorg/lib" })
+stage({ action: "view", stageId: "반환된-stage-id" })
+stage({ action: "download", stageId: "반환된-stage-id", path: "/home/user/review" })
+stage({ action: "approve", stageId: "반환된-stage-id", otp: "123456" })
+```
+
+스테이징만으로는 공개되지 않고 `approve`가 실제 발행합니다. `approve`와 `reject`는
+관리자의 2FA를 요구합니다. `dryRun`은 `action: "publish"`에서만 사용하세요.
+stage-only 토큰으로 직접 발행하면 `E_STAGE_REQUIRED`가 발생합니다. npm은 granular
+토큰 직접 발행을 2027년 1월 제거할 예정입니다.
+[공식 stage 문서](https://docs.npmjs.com/cli/v11/commands/npm-stage/) ·
+[토큰 정책](https://docs.npmjs.com/about-access-tokens/)
+
+`pkg`의 `value`에는 문자열, 숫자, 불리언, null, 배열, 객체를 그대로 전달합니다.
+예: `value: { test: "node --test" }`. 배열·객체를 문자열로 변환하지 마세요.
+2026년 8월부터 계정·유지관리자·토큰 변경은 bypass-2FA 토큰으로도 2FA를 생략할 수
+없습니다. 만료된 토큰은 갱신하거나 `npm login`으로 다시 인증해야 합니다.
 
 | 방법 | 설명 |
 |------|-----|

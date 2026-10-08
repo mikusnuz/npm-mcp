@@ -7,12 +7,28 @@ import { execFile } from "child_process";
 import { promisify } from "util";
 import { writeFileSync, mkdtempSync } from "fs";
 import { tmpdir } from "os";
-import { join } from "path";
+import { isAbsolute, join } from "path";
 
 const exec = promisify(execFile);
 
 const NPM = process.env.NPM_PATH || "npm";
 const NPM_TOKEN = process.env.NPM_TOKEN || "";
+const packageValueSchema = z.union([
+  z.string(), z.number().finite(), z.boolean(), z.null(), z.array(z.unknown()), z.record(z.unknown()),
+]);
+const stageSchema = {
+  action: z.enum(["publish", "list", "view", "download", "approve", "reject"]),
+  path: z.string().refine(isAbsolute, "Use an absolute directory path").optional()
+    .describe("Package directory for publish; destination directory for download"),
+  package: z.string().min(1).refine((value) => !value.startsWith("-")).optional()
+    .describe("Optional package spec to filter the list"),
+  stageId: z.string().min(1).refine((value) => !value.startsWith("-")).optional()
+    .describe("Required for view, download, approve, and reject"),
+  tag: z.string().optional().describe("Dist-tag for staged publish"),
+  access: z.enum(["public", "restricted"]).optional().describe("Access for staged publish"),
+  dryRun: z.boolean().optional().describe("Preview staged publish without uploading"),
+  otp: z.string().optional().describe("2FA code for approving or rejecting a stage"),
+};
 
 // Create temp .npmrc when NPM_TOKEN is provided
 let npmrcArgs: string[] = [];
@@ -39,7 +55,7 @@ async function run(
 
 const server = new McpServer({
   name: "npm-mcp",
-  version: "1.2.0",
+  version: "1.3.0",
 });
 
 // ── npm publish ──
@@ -69,10 +85,48 @@ server.tool(
       const { stdout, stderr } = await run(args, path);
       return { content: [{ type: "text", text: stdout + stderr }] };
     } catch (e: any) {
+      const detail = String(e.stderr || e.message);
       return {
-        content: [{ type: "text", text: `Error: ${e.stderr || e.message}` }],
+        content: [{ type: "text", text: `Error: ${detail}${detail.includes("E_STAGE_REQUIRED") ? "\nUse stage with action=publish, then review and approve the returned stage ID with 2FA." : ""}` }],
         isError: true,
       };
+    }
+  },
+);
+
+server.tool(
+  "stage",
+  "Stage a package, inspect pending versions, download a tarball, or approve/reject a stage. Approval publishes the version; rejection removes the staged version. Requires an npm CLI supporting npm stage.",
+  stageSchema,
+  async ({ action, path, package: pkg, stageId, tag, access, dryRun, otp }) => {
+    try {
+      if ((action === "publish" || action === "download") && !path) {
+        throw new Error(`path is required for stage ${action}.`);
+      }
+      if (!["publish", "list"].includes(action) && !stageId) {
+        throw new Error(`stageId is required for stage ${action}.`);
+      }
+      if ((tag !== undefined || access !== undefined || dryRun !== undefined) && action !== "publish") {
+        throw new Error("tag, access, and dryRun apply only to stage publish.");
+      }
+      if (pkg !== undefined && action !== "list") throw new Error("package applies only to stage list.");
+      const args = ["stage", action];
+      if (action === "publish") {
+        if (tag) args.push("--tag", tag);
+        if (access) args.push("--access", access);
+        if (dryRun) args.push("--dry-run");
+      } else if (action === "list") {
+        if (pkg) args.push(pkg);
+        args.push("--json");
+      } else {
+        args.push(stageId!);
+        if (action === "view" || action === "download") args.push("--json");
+      }
+      if (otp) args.push("--otp", otp);
+      const { stdout, stderr } = await run(args, path);
+      return { content: [{ type: "text", text: stdout + stderr || "Done" }] };
+    } catch (e: any) {
+      return { content: [{ type: "text", text: `Error: ${e.stderr || e.message}` }], isError: true };
     }
   },
 );
@@ -214,8 +268,10 @@ server.tool(
     otp: z.string().optional().describe("One-time password for 2FA"),
   },
   async ({ action, package: pkg, user, otp }) => {
-    const args = ["owner", action, pkg];
-    if (user && (action === "add" || action === "rm")) args.push(user);
+    if (action !== "ls" && !user) {
+      return { content: [{ type: "text", text: "Error: user is required for owner add/rm" }], isError: true };
+    }
+    const args = action === "ls" ? ["owner", action, pkg] : ["owner", action, user!, pkg];
     if (otp) args.push("--otp", otp);
     try {
       const { stdout } = await run(args);
@@ -491,7 +547,7 @@ server.tool(
     action: z.enum(["list", "get", "set", "grant", "revoke"]).describe("Action to perform"),
     package: z.string().optional().describe("Package name"),
     level: z
-      .enum(["public", "restricted"])
+      .enum(["public", "private", "restricted"])
       .optional()
       .describe("Access level (for set action)"),
     team: z.string().optional().describe("Team name in org:team format (for grant/revoke)"),
@@ -513,8 +569,10 @@ server.tool(
         if (pkg) args.push(pkg);
         break;
       case "set":
-        if (level === "public") args.push("public");
-        else args.push("restricted");
+        if (!level) {
+          return { content: [{ type: "text", text: "Error: level is required for access set" }], isError: true };
+        }
+        args.push("set", `status=${level === "restricted" ? "private" : level}`);
         if (pkg) args.push(pkg);
         break;
       case "grant":
@@ -696,13 +754,13 @@ server.tool(
     path: z.string().describe("Absolute path to the package directory"),
     action: z.enum(["get", "set", "delete"]).describe("Action to perform"),
     field: z.string().describe("Field name (e.g. 'name', 'scripts.build', 'keywords')"),
-    value: z.string().optional().describe("Value to set (required for set action, use JSON for objects/arrays)"),
+    value: packageValueSchema.optional().describe("JSON value to set; strings are literal strings, objects/arrays are accepted directly"),
   },
   async ({ path, action, field, value }) => {
-    const args = ["pkg", action, field];
-    if (action === "set" && value !== undefined) {
-      args.push(value);
+    if (action === "set" && value === undefined) {
+      return { content: [{ type: "text", text: "Error: value is required for pkg set" }], isError: true };
     }
+    const args = ["pkg", action, action === "set" ? `${field}=${JSON.stringify(value)}` : field];
     args.push("--json");
     try {
       const { stdout, stderr } = await run(args, path);
@@ -1103,7 +1161,7 @@ Follow these steps in order:
 1. **Check auth** — call \`whoami\` to confirm we are logged in.
 2. **Preview contents** — call \`pack\` with \`dryRun: true\` to review what will be included.
 3. **Bump version** — call \`version\` with bump="${bump ?? "patch"}" and \`noGitTag: false\` so a git tag is created automatically.
-4. **Publish** — call \`publish\` with access="${access ?? "public"}". If the account has 2FA enabled, ask me for the OTP first.
+4. **Publish** — call \`publish\` with access="${access ?? "public"}". For a stage-only token or E_STAGE_REQUIRED, call \`stage\` with action="publish", then inspect the stage with action="view". A maintainer with 2FA completes action="approve" using that stage ID. Use the OTP when required by npm.
 5. **Confirm** — call \`view\` on the package to confirm the new version is live on the registry.
 
 Report the final published version and registry URL when done.`,
@@ -1194,10 +1252,11 @@ main().catch((err) => {
 export function createSandboxServer() {
   const sandbox = new McpServer({
     name: "npm-mcp",
-    version: "1.2.0",
+    version: "1.3.0",
   });
 
   const noop = async () => ({ content: [{ type: "text" as const, text: "sandbox" }] });
+  sandbox.tool("stage", "Publish, list, view, download, approve, or reject staged npm packages", stageSchema, noop);
 
   sandbox.tool("publish", "Publish a package to the npm registry", {
     path: z.string().describe("Absolute path to the package directory"),
@@ -1308,7 +1367,7 @@ export function createSandboxServer() {
   sandbox.tool("access", "Set or view access level on published packages", {
     action: z.enum(["list", "get", "set", "grant", "revoke"]).describe("Action to perform"),
     package: z.string().optional().describe("Package name"),
-    level: z.enum(["public", "restricted"]).optional().describe("Access level"),
+    level: z.enum(["public", "private", "restricted"]).optional().describe("Access level"),
     team: z.string().optional().describe("Team name"),
     permission: z.enum(["read-only", "read-write"]).optional().describe("Permission level"),
     otp: z.string().optional().describe("One-time password for 2FA"),
@@ -1345,7 +1404,7 @@ export function createSandboxServer() {
     path: z.string().describe("Absolute path to the package directory"),
     action: z.enum(["get", "set", "delete"]).describe("Action to perform"),
     field: z.string().describe("Field name"),
-    value: z.string().optional().describe("Value to set"),
+    value: packageValueSchema.optional().describe("JSON value to set"),
   }, noop);
 
   sandbox.tool("fund", "Show funding information for installed packages", {

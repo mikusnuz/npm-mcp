@@ -2,10 +2,11 @@
 
 > MCP server for npm registry operations. Publish, version, search, audit, install, and manage packages through any MCP client.
 
-## Tools (36)
+## Tools (37)
 
 ### Publishing & Versioning
 - publish: Publish a package to npm registry
+- stage: Publish to staging, list/view/download stages, approve to publish, or reject
 - version: Bump package version (patch/minor/major/pre*)
 - unpublish: Remove a package version
 - deprecate: Deprecate a version (or undeprecate with empty message)
@@ -63,7 +64,7 @@ cd npm-mcp && npm install && npm run build
 
 ## Environment Variables
 
-- NPM_TOKEN — npm authentication token (get from npmjs.com > Access Tokens)
+- NPM_TOKEN — npm granular access token (get from npmjs.com > Access Tokens)
 - NPM_PATH — path to npm binary if not in PATH (default: `npm`)
 
 If you've already run `npm login` locally, NPM_TOKEN is optional — it uses ~/.npmrc automatically.
@@ -86,7 +87,16 @@ If you've already run `npm login` locally, NPM_TOKEN is optional — it uses ~/.
 
 ## Auth Notes
 
-For 2FA-enabled accounts, pass `otp` parameter to publish/unpublish/deprecate/owner/access/token tools.
+Classic/Automation tokens are no longer supported. For stage-only tokens, use stage
+action=publish, inspect via list/view/download, then approve or reject with maintainer 2FA.
+Stage publish/download require an absolute path; view/download/approve/reject require stageId.
+dryRun is only available for stage publish. Staged publishing requires npm CLI >=11.15.0
+and Node.js >=22.14.0; NPM_PATH can select a separate npm installation.
+Requirements: https://docs.npmjs.com/staged-publishing/
+Direct publish with a stage-only token returns E_STAGE_REQUIRED; do not claim it was published.
+Granular-token direct publishing is scheduled for removal in January 2027.
+Pass otp when required by npm. Bypass-2FA tokens do not bypass account/governance 2FA.
+For pkg set, pass strings/booleans/numbers/null/arrays/objects directly as value; do not stringify objects.
 
 ## Links
 - npm: https://www.npmjs.com/package/@mikusnuz/npm-mcp
